@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>IRCTC Autofill</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --ink: #172d28;
+            --muted: #65736e;
+            --green: #176b50;
+            --green-dark: #10533d;
+            --line: #dce5df;
+            --paper: #f5f7f2;
+            --white: #ffffff;
+            --accent: #d77450;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            width: 380px;
+            max-height: 580px;
+            overflow-y: auto;
+            margin: 0;
+            padding: 20px;
+            color: var(--ink);
+            background:
+                linear-gradient(135deg, transparent 0 88%, rgba(23, 107, 80, .06) 88% 100%),
+                var(--paper);
+            font-family: "Segoe UI", sans-serif;
+        }
+
+        header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .eyebrow { margin: 0 0 5px; color: var(--green); font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; }
+        h1 { margin: 0; font-family: Georgia, serif; font-size: 24px; font-weight: 500; }
+        .status-mark { width: 10px; height: 10px; margin-top: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px rgba(215, 116, 80, .12); }
+        .section-heading { margin: 22px 0 10px; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase; }
+        .passenger-list { display: grid; gap: 8px; }
+        .passenger-card { padding: 12px 13px; border: 1px solid var(--line); border-radius: 6px; background: var(--white); }
+        .passenger-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+        .passenger-title { color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase; }
+        .passenger-name { margin: 5px 0 8px; font-family: Georgia, serif; font-size: 17px; font-weight: 500; overflow-wrap: anywhere; }
+        .passenger-details { display: flex; flex-wrap: wrap; gap: 5px 14px; color: var(--muted); font-size: 11px; }
+        .passenger-actions { display: flex; gap: 5px; }
+        .passenger-actions button { min-height: 27px; padding: 0 8px; font-size: 10px; }
+        .actions { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 12px; }
+        button { min-height: 39px; border: 1px solid var(--line); border-radius: 5px; color: var(--ink); background: var(--white); font: inherit; font-size: 12px; font-weight: 650; cursor: pointer; }
+        button:hover { border-color: var(--green); }
+        button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+        .primary { border-color: var(--green); color: var(--white); background: var(--green); }
+        .primary:hover { border-color: var(--green-dark); background: var(--green-dark); }
+        .secondary { padding: 0 12px; }
+        #editForm { margin-top: 16px; padding: 13px; border: 1px solid var(--line); border-radius: 6px; background: var(--white); }
+        #formTitle { margin: 0 0 8px; font-family: Georgia, serif; font-size: 18px; font-weight: 500; }
+        label { display: block; margin-top: 12px; color: var(--muted); font-size: 11px; font-weight: 650; }
+        input, select { width: 100%; min-height: 38px; margin-top: 5px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 5px; color: var(--ink); background: var(--white); font: inherit; font-size: 13px; }
+        #save { width: 100%; margin-top: 16px; }
+        #empty { padding: 16px; border: 1px solid var(--line); border-radius: 6px; color: var(--muted); background: var(--white); font-size: 13px; line-height: 1.5; }
+        #status { min-height: 16px; margin: 11px 1px 0; color: var(--muted); font-size: 11px; }
+        .payment-mode { margin: 17px 0 0; padding: 0; border: 0; }
+        .payment-mode legend { margin-bottom: 8px; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase; }
+        .payment-options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .payment-option { display: flex; align-items: center; gap: 8px; min-height: 40px; margin: 0; padding: 0 10px; border: 1px solid var(--line); border-radius: 5px; color: var(--ink); background: var(--white); cursor: pointer; font-size: 12px; }
+        .payment-option:has(input:checked) { border-color: var(--green); box-shadow: inset 0 0 0 1px var(--green); }
+        .payment-option input[type="radio"] { width: 15px; min-height: 15px; height: 15px; margin: 0; padding: 0; accent-color: var(--green); }
+        button:disabled { opacity: .5; cursor: not-allowed; }
+        [hidden] { display: none !important; }
+    </style>
+</head>
+<body>
+    <header>
+        <div>
+            <p class="eyebrow">Passenger profile</p>
+            <h1>IRCTC Autofill</h1>
+        </div>
+        <span class="status-mark" aria-hidden="true"></span>
+    </header>
+
+    <p class="section-heading">Saved passengers <span id="count"></span></p>
+    <section id="passengerList" class="passenger-list" aria-label="Saved passenger details"></section>
+    <div id="empty" hidden>No passenger profiles saved yet. Add your details to get started.</div>
+
+    <fieldset class="payment-mode">
+        <legend>Payment mode</legend>
+        <div class="payment-options">
+            <label class="payment-option"><input type="radio" name="paymentMode" value="card" checked> Card</label>
+            <label class="payment-option"><input type="radio" name="paymentMode" value="upi"> UPI</label>
+        </div>
+    </fieldset>
+
+    <div class="actions">
+        <button id="fill" class="primary" type="button" disabled>Autofill IRCTC</button>
+        <button id="addPassenger" class="secondary" type="button">Add passenger</button>
+    </div>
+
+    <form id="editForm" hidden>
+        <h2 id="formTitle">New passenger</h2>
+        <label for="name">Passenger name</label>
+        <input id="name" autocomplete="name" required minlength="3" maxlength="16">
+
+        <label for="age">Age</label>
+        <input id="age" type="number" min="1" max="120" inputmode="numeric" required>
+
+        <label for="gender">Gender</label>
+        <select id="gender">
+            <option value="">Select gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Transgender">Transgender</option>
+        </select>
+
+        <label for="berthType">Berth preference</label>
+        <select id="berthType">
+            <option value="">No preference</option>
+            <option value="Lower">Lower</option>
+            <option value="Middle">Middle</option>
+            <option value="Upper">Upper</option>
+            <option value="Side Lower">Side Lower</option>
+            <option value="Side Upper">Side Upper</option>
+        </select>
+
+        <div class="actions">
+            <button id="save" class="primary" type="submit">Save passenger</button>
+            <button id="cancelEdit" class="secondary" type="button">Cancel</button>
+        </div>
+    </form>
+
+    <div id="status" role="status" aria-live="polite"></div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

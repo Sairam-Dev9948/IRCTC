@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "IRCTC Passenger Autofill",
+  "version": "1.0.6",
+  "description": "Manually fills saved passenger details.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://*.irctc.co.in/*"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.irctc.co.in/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}
